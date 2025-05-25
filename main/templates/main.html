@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main</title>
+</head>
+<body>
+    <a href="{% url 'create_task' %}">Create the task</a>
+
+    <h2>Not touched</h2>
+    <ul>
+        {% for task in tasks_untouched %}
+            <li><a href="{% url 'edit_task' task.id %}">{{ task.title }}</a> — {{ task.status }}</li>
+        {% empty %}
+            <li>There is nothing</li>
+        {% endfor %}
+    </ul>
+
+    <h2>In Progress</h2>
+    <ul>
+        {% for task in tasks_in_progress %}
+            <li><a href="{% url 'edit_task' task.id %}">{{ task.title }}</a> — {{ task.status }}</li>
+        {% empty %}
+            <li>There is nothing</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Done</h2>
+    <ul>
+        {% for task in tasks_done %}
+            <li><a href="{% url 'edit_task' task.id %}">{{ task.title }}</a> — {{ task.status }}</li>
+        {% empty %}
+            <li>There is nothing</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
