@@ -27,13 +27,23 @@ class Unit(models.Model):
         return f"{self.first_name} {self.second_name} {self.role or 'No role'}"
 
 
+class Project(models.Model):
+    title = models.CharField(max_length=32)
+    description = models.TextField(max_length=256)
+    unit = models.ManyToManyField(Unit, blank=True)
+
+    def __str__(self):
+        return self.title
+
+
 class Task(models.Model):
     title = models.CharField(max_length=32)
-    description = models.TextField(max_length=248)
+    description = models.TextField(max_length=256)
     unit = models.ManyToManyField(Unit, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     deadline = models.DateTimeField(blank=True, null=True)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, null=True, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.status is None:
@@ -45,3 +55,4 @@ class Task(models.Model):
 
     def __str__(self):
         return f'{self.title} {self.status}'
+

@@ -1,8 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout, get_user_model
-from .forms import LoginForm, RegisterForm, TaskForm, TaskEditForm
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+
+from .forms import LoginForm, RegisterForm, TaskForm, TaskEditForm, ProjectForm
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Unit, Status, Task, Role
+from .models import Unit, Status, Task, Role, Project
 
 User = get_user_model()
 
@@ -14,11 +17,13 @@ def main(request):
     tasks_done = Task.objects.filter(status__name='Done')
     tasks_untouched = Task.objects.filter(status__name='Untouched')
     tasks_in_progress = Task.objects.filter(status__name='In Progress')
+    projects = Project.objects.all()
 
     return render(request, "main.html", {
         'tasks_done': tasks_done,
         'tasks_untouched': tasks_untouched,
         'tasks_in_progress': tasks_in_progress,
+        'projects': projects,
     })
 
 
@@ -31,12 +36,59 @@ def main(request):
 #     return render(request, 'logout.html')
 
 
+@require_GET
+def get_units_by_project(request):
+    project_id = request.GET.get('project_id')
+    if project_id:
+        try:
+            project = Project.objects.get(pk=project_id)
+            units = project.unit.all().values('id', 'first_name', 'second_name')
+            units_list = [
+                {'id': u['id'], 'name': f"{u['first_name']} {u['second_name']}"}
+                for u in units
+            ]
+            return JsonResponse({'units': units_list})
+        except Project.DoesNotExist:
+            return JsonResponse({'units': []})
+    return JsonResponse({'units': []})
+
+
+@login_required
+def create_project(request):
+    if request.method == 'POST':
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('main')
+    else:
+        form = ProjectForm()
+    return render(request, 'create_project.html', {'form': form})
+
+
+@login_required
+def update_project(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+
+    if request.method == 'POST':
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            return redirect('main')
+    else:
+        form = ProjectForm(instance=project)
+
+    return render(request, 'update_project.html', {'form': form, 'project': project})
+
+
 @login_required
 def add_task(request):
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
-            form.save()
+            task = form.save(commit=False)
+            task.save()
+            unit_ids = request.POST.getlist('unit')
+            task.unit.set(unit_ids)
             return redirect('main')
     else:
         form = TaskForm()
@@ -54,6 +106,7 @@ def edit_task(request, task_id):
     else:
         form = TaskEditForm(instance=task)
     return render(request, 'edit_task.html', {'form': form, 'task': task})
+
 
 #########################################################################################################
 
@@ -96,4 +149,3 @@ def registration_view(request):
         form = RegisterForm()
 
     return render(request, 'authorization/registration.html', {'form': form})
-

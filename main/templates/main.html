@@ -5,6 +5,15 @@
     <title>Main</title>
 </head>
 <body>
+    <h1>Список проєктів</h1>
+    <ul>
+        {% for project in projects %}
+            <li>{{ project.title }} — {{ project.description }}</li>
+        {% empty %}
+            <li>Проєктів немає</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'create_project' %}">Create new project</a>
     <a href="{% url 'create_task' %}">Create the task</a>
 
     <h2>Not touched</h2>

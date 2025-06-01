@@ -1,14 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Create Task</title>
 </head>
 <body>
-    <form method="post">
+    <form method="post" id="task-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Додати завдання</button>
+
+        <p>
+            {{ form.title.label_tag }}<br />
+            {{ form.title }}
+        </p>
+
+        <p>
+            {{ form.description.label_tag }}<br />
+            {{ form.description }}
+        </p>
+
+        <p>
+            {{ form.project.label_tag }}<br />
+            {{ form.project }}
+        </p>
+
+        <fieldset id="units-container">
+            <legend>{{ form.unit.label }}</legend>
+            <div id="units-checkboxes">
+                <!-- чекбокси юнітів завантажаться сюди -->
+            </div>
+        </fieldset>
+
+        <p>
+            {{ form.deadline.label_tag }}<br />
+            {{ form.deadline }}
+        </p>
+
+        <p>
+            {{ form.status.label_tag }}<br />
+            {{ form.status }}
+        </p>
+
+        <button type="submit">Створити завдання</button>
     </form>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const projectSelect = document.getElementById("id_project");
+        const unitsContainer = document.getElementById("units-checkboxes");
+
+        function loadUnits(projectId) {
+            unitsContainer.innerHTML = "Завантаження...";
+            fetch("{% url 'ajax_get_units' %}?project_id=" + projectId)
+                .then(response => response.json())
+                .then(data => {
+                    unitsContainer.innerHTML = "";
+                    if(data.units.length === 0) {
+                        unitsContainer.innerHTML = "<p>Юнітів немає у цьому проєкті</p>";
+                    } else {
+                        data.units.forEach(unit => {
+                            const checkbox = document.createElement("input");
+                            checkbox.type = "checkbox";
+                            checkbox.name = "unit";
+                            checkbox.value = unit.id;
+                            checkbox.id = "unit_" + unit.id;
+
+                            const label = document.createElement("label");
+                            label.htmlFor = checkbox.id;
+                            label.textContent = unit.name;
+
+                            const div = document.createElement("div");
+                            div.appendChild(checkbox);
+                            div.appendChild(label);
+
+                            unitsContainer.appendChild(div);
+                        });
+                    }
+                });
+        }
+
+        projectSelect.addEventListener('change', function() {
+            const projectId = this.value;
+            if(projectId) {
+                loadUnits(projectId);
+            } else {
+                unitsContainer.innerHTML = "";
+            }
+        });
+
+        if(projectSelect.value) {
+            loadUnits(projectSelect.value);
+        }
+    });
+    </script>
 </body>
 </html>

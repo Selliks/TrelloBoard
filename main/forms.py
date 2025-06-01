@@ -1,6 +1,15 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Status, Task, Unit, Role
+from .models import Status, Task, Unit, Role, Project
+
+
+class ProjectForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ['title', 'description', 'unit']
+        widgets = {
+            'unit': forms.CheckboxSelectMultiple(),
+        }
 
 
 class TaskForm(forms.ModelForm):
@@ -9,16 +18,20 @@ class TaskForm(forms.ModelForm):
         input_formats=['%Y-%m-%dT%H:%M'],
         required=False
     )
-
     status = forms.ModelChoiceField(
         queryset=Status.objects.all(),
         empty_label="Оберіть статус",
         required=False
     )
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.all(),
+        required=True,
+        empty_label="Оберіть проєкт"
+    )
 
     class Meta:
         model = Task
-        fields = ['title', 'description', 'unit', 'deadline', 'status']
+        fields = ['title', 'description', 'project', 'unit', 'deadline', 'status']
         widgets = {
             'unit': forms.CheckboxSelectMultiple(),
         }
